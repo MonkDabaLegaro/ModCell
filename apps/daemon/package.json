@@ -12,6 +12,8 @@
     "@modcell/device-domain": "workspace:*",
     "@modcell/diagnostics": "workspace:*",
     "@modcell/files": "workspace:*",
+    "@modcell/screen-control": "workspace:*",
+    "@modcell/toolchain": "workspace:*",
     "fastify": "^5.5.0"
   },
   "scripts": { "dev": "tsx watch src/server.ts", "build": "tsc -p tsconfig.json", "start": "node dist/server.js", "typecheck": "tsc -p tsconfig.json --noEmit", "test": "vitest run --passWithNoTests", "clean": "rimraf dist" }
