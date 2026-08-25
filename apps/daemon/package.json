@@ -7,6 +7,7 @@
     "@fastify/cors": "^11.1.0",
     "@fastify/multipart": "^9.2.1",
     "@modcell/android-bridge": "workspace:*",
+    "@modcell/applications": "workspace:*",
     "@modcell/contracts": "workspace:*",
     "@modcell/device-domain": "workspace:*",
     "@modcell/files": "workspace:*",

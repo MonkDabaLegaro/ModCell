@@ -38,28 +38,19 @@ export interface DeviceSnapshot {
 }
 
 export type DeviceFileKind = "file" | "directory";
+export interface DeviceFileEntry { name: string; path: string; kind: DeviceFileKind; size: number; modifiedAt: string | null; }
+export interface DeviceDirectoryListing { serial: string; path: string; entries: DeviceFileEntry[]; }
 
-export interface DeviceFileEntry {
-  name: string;
-  path: string;
-  kind: DeviceFileKind;
-  size: number;
-  modifiedAt: string | null;
+export type ApplicationSource = "user" | "system";
+export interface ApplicationSummary {
+  packageName: string;
+  apkPath: string;
+  source: ApplicationSource;
+  enabled: boolean;
 }
+export interface ApplicationInventory { serial: string; applications: ApplicationSummary[]; }
+export interface ApplicationDetails extends ApplicationSummary { permissions: string[]; }
 
-export interface DeviceDirectoryListing {
-  serial: string;
-  path: string;
-  entries: DeviceFileEntry[];
-}
+export interface HealthResponse { status: "ok"; service: "modcell-daemon"; version: string; }
 
-export interface HealthResponse {
-  status: "ok";
-  service: "modcell-daemon";
-  version: string;
-}
-
-export const API_ROUTES = {
-  health: "/api/health",
-  devices: "/api/devices"
-} as const;
+export const API_ROUTES = { health: "/api/health", devices: "/api/devices" } as const;

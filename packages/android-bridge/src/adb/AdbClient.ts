@@ -3,10 +3,7 @@ import type { CommandResult, CommandRunner } from "../process/CommandRunner.js";
 import { NodeCommandRunner } from "../process/NodeCommandRunner.js";
 import { parseAdbDevices } from "./parseDevices.js";
 
-export interface AdbClientOptions {
-  adbPath?: string;
-  runner?: CommandRunner;
-}
+export interface AdbClientOptions { adbPath?: string; runner?: CommandRunner; }
 
 export class AdbClient {
   readonly adbPath: string;
@@ -46,6 +43,10 @@ export class AdbClient {
   async push(serial: string, localPath: string, remotePath: string): Promise<boolean> {
     const result = await this.runner.run(this.adbPath, ["-s", serial, "push", localPath, remotePath], { timeoutMs: 120_000 });
     return result.exitCode === 0;
+  }
+
+  async install(serial: string, localApkPath: string): Promise<CommandResult> {
+    return await this.runner.run(this.adbPath, ["-s", serial, "install", "-r", localApkPath], { timeoutMs: 180_000 });
   }
 
   async reboot(serial: string): Promise<boolean> {
