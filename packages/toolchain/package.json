@@ -1,0 +1,19 @@
+{
+  "name": "@modcell/toolchain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@modcell/android-bridge": "workspace:*",
+    "@modcell/contracts": "workspace:*",
+    "extract-zip": "^2.0.1",
+    "tar": "^7.4.3"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  }
+}

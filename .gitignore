@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.turbo/
+.vite/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+
+# Local toolchain cache. ADB/scrcpy are resolved at runtime, not committed.
+.tools/
