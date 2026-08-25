@@ -1,4 +1,9 @@
 import type { ApplicationDetails, ApplicationInventory, DeviceDiagnosticsSnapshot, DeviceDirectoryListing, DeviceSnapshot, LogcatLevel, LogcatResponse } from "@modcell/contracts";
+
+export interface ScreenToolStatus { name: "scrcpy"; version: string; source: "environment" | "path" | "managed" | "unavailable"; executablePath: string | null; managed: boolean; detail?: string; }
+export interface ScreenSessionStatus { serial: string; running: boolean; pid: number | null; startedAt: string | null; }
+export interface StartScreenOptions { maxSize?: number; videoBitRateMbps?: number; stayAwake?: boolean; }
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> { const response = await fetch(path, { ...init, headers: { "Content-Type": "application/json", ...init?.headers } }); if (!response.ok) { const payload = await response.json().catch(() => null) as { error?: string } | null; throw new Error(payload?.error ?? `ModCell daemon request failed (${response.status})`); } if (response.status === 204) return undefined as T; return await response.json() as T; }
 export const modcellApi = {
   devices: () => request<DeviceSnapshot>("/api/devices"),
@@ -15,5 +20,10 @@ export const modcellApi = {
   diagnostics: (serial: string) => request<DeviceDiagnosticsSnapshot>(`/api/devices/${encodeURIComponent(serial)}/diagnostics`),
   logcat: (serial: string, level: LogcatLevel = "V", lines = 200) => request<LogcatResponse>(`/api/devices/${encodeURIComponent(serial)}/diagnostics/logcat?level=${level}&lines=${lines}`),
   bugreportUrl: (serial: string) => `/api/devices/${encodeURIComponent(serial)}/diagnostics/bugreport`,
+  screenTool: () => request<ScreenToolStatus>("/api/screen/tool"),
+  ensureScreenTool: () => request<ScreenToolStatus>("/api/screen/tool/ensure", { method: "POST" }),
+  screenStatus: (serial: string) => request<ScreenSessionStatus>(`/api/devices/${encodeURIComponent(serial)}/screen`),
+  startScreen: (serial: string, options: StartScreenOptions) => request<ScreenSessionStatus>(`/api/devices/${encodeURIComponent(serial)}/screen`, { method: "POST", body: JSON.stringify(options) }),
+  stopScreen: (serial: string) => request<ScreenSessionStatus>(`/api/devices/${encodeURIComponent(serial)}/screen`, { method: "DELETE" }),
   reboot: (serial: string) => request<{ ok: boolean }>(`/api/devices/${encodeURIComponent(serial)}/reboot`, { method: "POST" })
 };
