@@ -7,7 +7,7 @@ export const navigation = [
   { id: "media", label: "Media", icon: Images, enabled: false },
   { id: "storage", label: "Storage", icon: HardDrive, enabled: false },
   { id: "diagnostics", label: "Diagnostics", icon: Activity, enabled: true },
-  { id: "screen", label: "Screen Control", icon: MonitorSmartphone, enabled: false },
+  { id: "screen", label: "Screen Control", icon: MonitorSmartphone, enabled: true },
   { id: "device", label: "Device", icon: Smartphone, enabled: false },
   { id: "advanced", label: "Advanced", icon: ShieldCheck, enabled: false },
   { id: "settings", label: "Settings", icon: Settings, enabled: false }
