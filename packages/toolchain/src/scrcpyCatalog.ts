@@ -1,11 +1,9 @@
-import type { Architecture, Platform } from "node:process";
-
 export const SCRCPY_VERSION = "4.1" as const;
 const BASE_URL = `https://github.com/Genymobile/scrcpy/releases/download/v${SCRCPY_VERSION}`;
 
 export interface ScrcpyAsset {
   platform: NodeJS.Platform;
-  arch: Architecture;
+  arch: NodeJS.Architecture;
   fileName: string;
   sha256: string;
   archive: "zip" | "tar.gz";
@@ -52,6 +50,6 @@ const ASSETS: readonly ScrcpyAsset[] = [
   }
 ] as const;
 
-export function selectScrcpyAsset(platform: NodeJS.Platform, arch: Architecture): ScrcpyAsset | null {
+export function selectScrcpyAsset(platform: NodeJS.Platform, arch: NodeJS.Architecture): ScrcpyAsset | null {
   return ASSETS.find((asset) => asset.platform === platform && asset.arch === arch) ?? null;
 }
