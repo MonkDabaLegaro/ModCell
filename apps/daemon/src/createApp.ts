@@ -1,7 +1,8 @@
-import { createReadStream } from "node:fs";
+import { createReadStream, createWriteStream } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
-import { basename, join } from "node:path";
 import { tmpdir } from "node:os";
+import { basename, join } from "node:path";
+import { pipeline } from "node:stream/promises";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import { AdbClient } from "@modcell/android-bridge";
@@ -76,7 +77,7 @@ export async function createApp(options: CreateAppOptions = {}) {
       const part = await request.file();
       if (!part) return reply.code(400).send({ error: "A file is required" });
       const localPath = join(dir, "upload");
-      await part.toFile(localPath);
+      await pipeline(part.file, createWriteStream(localPath));
       await files.push(request.params.serial, localPath, request.query.path ?? "/sdcard", part.filename);
       return reply.code(201).send({ ok: true });
     } catch (error) {
