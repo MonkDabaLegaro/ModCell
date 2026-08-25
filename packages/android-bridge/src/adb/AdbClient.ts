@@ -34,6 +34,20 @@ export class AdbClient {
     return await this.runner.run(this.adbPath, ["-s", serial, "shell", ...args], { timeoutMs });
   }
 
+  async shellCommand(serial: string, command: string, timeoutMs = 10_000): Promise<CommandResult> {
+    return await this.runner.run(this.adbPath, ["-s", serial, "shell", "sh", "-c", command], { timeoutMs });
+  }
+
+  async pull(serial: string, remotePath: string, localPath: string): Promise<boolean> {
+    const result = await this.runner.run(this.adbPath, ["-s", serial, "pull", remotePath, localPath], { timeoutMs: 120_000 });
+    return result.exitCode === 0;
+  }
+
+  async push(serial: string, localPath: string, remotePath: string): Promise<boolean> {
+    const result = await this.runner.run(this.adbPath, ["-s", serial, "push", localPath, remotePath], { timeoutMs: 120_000 });
+    return result.exitCode === 0;
+  }
+
   async reboot(serial: string): Promise<boolean> {
     const result = await this.runner.run(this.adbPath, ["-s", serial, "reboot"], { timeoutMs: 10_000 });
     return result.exitCode === 0;

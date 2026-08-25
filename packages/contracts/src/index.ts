@@ -1,5 +1,4 @@
 export type DeviceConnectionState = "device" | "offline" | "unauthorized" | "unknown";
-
 export type CapabilityAvailability = "available" | "limited" | "unavailable";
 
 export interface DeviceDescriptor {
@@ -36,6 +35,22 @@ export interface DeviceProfile {
 export interface DeviceSnapshot {
   generatedAt: string;
   devices: DeviceProfile[];
+}
+
+export type DeviceFileKind = "file" | "directory";
+
+export interface DeviceFileEntry {
+  name: string;
+  path: string;
+  kind: DeviceFileKind;
+  size: number;
+  modifiedAt: string | null;
+}
+
+export interface DeviceDirectoryListing {
+  serial: string;
+  path: string;
+  entries: DeviceFileEntry[];
 }
 
 export interface HealthResponse {

@@ -5,14 +5,16 @@
   "type": "module",
   "dependencies": {
     "@fastify/cors": "^11.1.0",
+    "@fastify/multipart": "^9.2.1",
     "@modcell/android-bridge": "workspace:*",
     "@modcell/contracts": "workspace:*",
     "@modcell/device-domain": "workspace:*",
+    "@modcell/files": "workspace:*",
     "fastify": "^5.5.0"
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsup src/server.ts --format esm --platform node --target node22 --bundle --no-splitting --out-dir dist --clean",
+    "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests",

@@ -1,19 +1,10 @@
-import {
-  Activity,
-  Boxes,
-  Files,
-  HardDrive,
-  Images,
-  LayoutDashboard,
-  MonitorSmartphone,
-  Settings,
-  ShieldCheck,
-  Smartphone
-} from "lucide-react";
+import { Activity, Boxes, Files, HardDrive, Images, LayoutDashboard, MonitorSmartphone, Settings, ShieldCheck, Smartphone } from "lucide-react";
+
+export type NavigationId = "overview" | "files" | "applications" | "media" | "storage" | "diagnostics" | "screen" | "device" | "advanced" | "settings";
 
 export const navigation = [
   { id: "overview", label: "Overview", icon: LayoutDashboard, enabled: true },
-  { id: "files", label: "Files", icon: Files, enabled: false },
+  { id: "files", label: "Files", icon: Files, enabled: true },
   { id: "applications", label: "Applications", icon: Boxes, enabled: false },
   { id: "media", label: "Media", icon: Images, enabled: false },
   { id: "storage", label: "Storage", icon: HardDrive, enabled: false },
