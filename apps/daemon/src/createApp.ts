@@ -11,6 +11,8 @@ import type { HealthResponse } from "@modcell/contracts";
 import { DeviceService } from "@modcell/device-domain";
 import { DiagnosticService } from "@modcell/diagnostics";
 import { FileService } from "@modcell/files";
+import { ScreenSessionManager } from "@modcell/screen-control";
+import { ToolchainManager } from "@modcell/toolchain";
 import Fastify from "fastify";
 
 export interface CreateAppOptions { adbPath?: string; }
@@ -21,8 +23,11 @@ export async function createApp(options: CreateAppOptions = {}) {
   const files = new FileService(adb);
   const applications = new ApplicationService(adb);
   const diagnostics = new DiagnosticService(adb);
+  const toolchain = new ToolchainManager();
+  const screen = new ScreenSessionManager(toolchain, { adbPath: adb.adbPath });
   await app.register(cors, { origin: (origin, callback) => { const allowed = !origin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin); callback(allowed ? null : new Error("Origin not allowed"), allowed); } });
   await app.register(multipart, { limits: { fileSize: 1024 * 1024 * 1024, files: 1 } });
+  app.addHook("onClose", async () => { await screen.stopAll(); });
   const requireDevice = async (serial: string) => { const snapshot = await devices.snapshot(); const target = snapshot.devices.find((device) => device.serial === serial); if (!target || target.state !== "device") throw new Error("Device is not connected and authorized"); };
   const message = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback;
 
@@ -44,6 +49,12 @@ export async function createApp(options: CreateAppOptions = {}) {
   app.get<{ Params: { serial: string } }>("/api/devices/:serial/diagnostics", async (request, reply) => { try { await requireDevice(request.params.serial); return await diagnostics.snapshot(request.params.serial); } catch (error) { return reply.code(400).send({ error: message(error, "Diagnostics failed") }); } });
   app.get<{ Params: { serial: string }; Querystring: { level?: string; lines?: number } }>("/api/devices/:serial/diagnostics/logcat", async (request, reply) => { try { await requireDevice(request.params.serial); return await diagnostics.logcat(request.params.serial, request.query); } catch (error) { return reply.code(400).send({ error: message(error, "Logcat failed") }); } });
   app.get<{ Params: { serial: string } }>("/api/devices/:serial/diagnostics/bugreport", async (request, reply) => { const dir = await mkdtemp(join(tmpdir(), "modcell-bugreport-")); try { await requireDevice(request.params.serial); const localPath = join(dir, "modcell-bugreport.zip"); await diagnostics.bugreport(request.params.serial, localPath); reply.header("Content-Disposition", "attachment; filename=modcell-bugreport.zip"); return reply.send(createReadStream(localPath).on("close", () => { void rm(dir, { recursive: true, force: true }); })); } catch (error) { await rm(dir, { recursive: true, force: true }); return reply.code(400).send({ error: message(error, "Bugreport failed") }); } });
+
+  app.get("/api/screen/tool", async () => toolchain.resolveScrcpy());
+  app.post("/api/screen/tool/ensure", async (_request, reply) => { try { return await toolchain.ensureScrcpy(); } catch (error) { return reply.code(500).send({ error: message(error, "scrcpy preparation failed") }); } });
+  app.get<{ Params: { serial: string } }>("/api/devices/:serial/screen", async (request, reply) => { try { await requireDevice(request.params.serial); return screen.status(request.params.serial); } catch (error) { return reply.code(409).send({ error: message(error, "Device unavailable") }); } });
+  app.post<{ Params: { serial: string }; Body: { maxSize?: number; videoBitRateMbps?: number; stayAwake?: boolean } }>("/api/devices/:serial/screen", async (request, reply) => { try { await requireDevice(request.params.serial); return await screen.start({ serial: request.params.serial, ...request.body }); } catch (error) { return reply.code(400).send({ error: message(error, "Screen session failed") }); } });
+  app.delete<{ Params: { serial: string } }>("/api/devices/:serial/screen", async (request) => screen.stop(request.params.serial));
 
   app.post<{ Params: { serial: string } }>("/api/devices/:serial/reboot", async (request, reply) => { try { await requireDevice(request.params.serial); const ok = await adb.reboot(request.params.serial); return reply.code(ok ? 202 : 500).send({ ok }); } catch (error) { return reply.code(409).send({ ok: false, error: message(error, "Device unavailable") }); } });
   return app;
