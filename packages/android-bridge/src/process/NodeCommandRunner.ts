@@ -10,13 +10,7 @@ export class NodeCommandRunner implements CommandRunner {
       let stderr = "";
       let timedOut = false;
       let settled = false;
-
-      const child = spawn(executable, [...args], {
-        cwd: options.cwd,
-        env: options.env,
-        windowsHide: true,
-        shell: false
-      });
+      let timer: NodeJS.Timeout;
 
       const settle = (result: CommandResult) => {
         if (settled) return;
@@ -24,6 +18,13 @@ export class NodeCommandRunner implements CommandRunner {
         clearTimeout(timer);
         resolve(result);
       };
+
+      const child = spawn(executable, [...args], {
+        cwd: options.cwd,
+        env: options.env,
+        windowsHide: true,
+        shell: false
+      });
 
       child.stdout?.setEncoding("utf8");
       child.stderr?.setEncoding("utf8");
@@ -39,7 +40,7 @@ export class NodeCommandRunner implements CommandRunner {
         settle({ stdout, stderr, exitCode: code ?? -1, timedOut });
       });
 
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         timedOut = true;
         child.kill();
       }, timeoutMs);

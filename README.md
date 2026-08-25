@@ -2,7 +2,7 @@
 
 ModCell is a local Android control laboratory. Connect an Android phone over USB, authorize ADB, and the local control plane discovers the device, profiles supported capabilities, and exposes them through a passive dark-forest web dashboard.
 
-The project intentionally separates Android control from presentation. The web UI can be replaced or redesigned without rewriting the ADB/domain layers.
+The architecture intentionally separates device control, domain policy, transport, shared contracts and presentation. The web interface, theme, or even the frontend technology can be changed later without rewriting the Android core.
 
 ## Current vertical slice
 
@@ -13,14 +13,14 @@ The project intentionally separates Android control from presentation. The web U
 - Resolve a capability matrix instead of assuming features by manufacturer.
 - Expose a localhost-only Fastify API.
 - Automatically refresh the React dashboard when a USB device appears.
-- Keep visual design behind CSS design tokens for inexpensive redesigns.
+- Keep visual design behind semantic CSS tokens for inexpensive redesigns.
 - Provide a guarded reboot endpoint as the first device action.
 
-## Architecture
+## Monorepo architecture
 
 ```text
 apps/
-  daemon/             Local HTTP control plane
+  daemon/             Local HTTP control plane and composition root
   web/                React/Vite laboratory dashboard
 
 packages/
@@ -29,7 +29,18 @@ packages/
   device-domain/      Device profiling + capability policy
 ```
 
-Dependencies point inward: `web` and `daemon` consume contracts; Android-specific execution lives behind `android-bridge`; device interpretation lives in `device-domain`.
+### Dependency direction
+
+```text
+web ---------> contracts
+                 ^
+                 |
+daemon ------> device-domain ------> android-bridge
+   |                 |                    |
+   +---------------->+------------------->contracts
+```
+
+`apps/daemon` is the composition root. Packages do not import the frontend or Fastify. Android process execution is replaceable through the `CommandRunner` interface, so tests and future transports do not require real subprocesses.
 
 ## Requirements
 
@@ -38,7 +49,7 @@ Dependencies point inward: `web` and `daemon` consume contracts; Android-specifi
 - Android Platform Tools (`adb`) available in PATH, or `MODCELL_ADB_PATH` configured
 - Android device with USB debugging enabled
 
-ModCell no longer requires checked-in Windows copies of Platform Tools or scrcpy. External tools are runtime dependencies and will be handled by platform-aware tooling as that module grows.
+Platform Tools and scrcpy binaries are intentionally not committed. They are external runtime tools and will be handled through a platform-aware toolchain module rather than freezing Windows binaries in source control.
 
 ## Development
 
@@ -47,13 +58,11 @@ pnpm install
 pnpm dev
 ```
 
-Then open `http://127.0.0.1:5173`.
+Open `http://127.0.0.1:5173`.
 
-The daemon listens on `http://127.0.0.1:4317` by default. The Vite development server proxies `/api` to it.
+The daemon listens on `http://127.0.0.1:4317` by default. Vite proxies `/api` to it during development.
 
 ### Optional configuration
-
-Copy `.env.example` values into your shell/environment when needed:
 
 ```text
 MODCELL_ADB_PATH=/absolute/path/to/adb
@@ -61,21 +70,38 @@ MODCELL_HOST=127.0.0.1
 MODCELL_PORT=4317
 ```
 
-## Design system
+## Frontend modularity
 
-The UI uses semantic CSS variables in `apps/web/src/styles/tokens.css`. Components consume semantic tokens rather than hardcoded theme colors. Changing the forest-green identity later should primarily require editing that token layer.
+The presentation layer is split into application navigation, API adapters, reusable UI components, feature modules and theme tokens:
 
-Icons come from Lucide as SVG-based React components. Emojis are not used as interface iconography. See `THIRD_PARTY_NOTICES.md`.
+```text
+apps/web/src/
+  api/
+  app/
+  components/
+    layout/
+    ui/
+  features/
+    overview/
+  hooks/
+  styles/
+    tokens.css
+    global.css
+```
 
-## Safety model
+The forest-green identity lives primarily in `styles/tokens.css`. Components use semantic variables such as `--color-bg-surface`, `--color-border` and `--color-text-primary`, so a future visual redesign does not require editing each feature component.
 
-ModCell is intended to control devices you own or are authorized to administer.
+The UI uses Lucide's SVG-based React icons; no emoji iconography is used. See `THIRD_PARTY_NOTICES.md`.
+
+## Local safety boundaries
+
+ModCell is intended for devices you own or are authorized to administer.
 
 - The daemon binds to loopback by default.
 - Browser access is restricted to localhost origins in development.
-- ADB commands use argument arrays with `shell: false` rather than concatenated shell strings.
-- Capabilities are detected before privileged functionality is exposed.
-- Advanced/root/fastboot operations should live behind explicit capability and confirmation policies as those modules are added.
+- ADB commands use argument arrays with `shell: false`; user-controlled values are not concatenated into shell command strings.
+- Device capability detection precedes privileged features.
+- Root and future fastboot functionality belongs behind explicit capability and confirmation policies.
 
 ## Roadmap
 
@@ -84,9 +110,9 @@ ModCell is intended to control devices you own or are authorized to administer.
 3. Diagnostics workspace with logcat and bugreport parsing.
 4. scrcpy toolchain integration and screen control.
 5. Storage analysis and cleanup jobs.
-6. Platform-aware toolchain resolver for Windows, Linux and macOS.
+6. Platform-aware ADB/scrcpy resolver for Windows, Linux and macOS.
 7. Advanced/root and fastboot modules with explicit risk boundaries.
 
-## Legacy prototype
+## History
 
-The repository started as a PyQt proof of concept. The TypeScript monorepo is now the active architecture. Legacy files will be removed as their remaining behavior is either migrated or intentionally retired.
+ModCell began as a small PyQt proof of concept. That implementation has been retired from the active tree after its useful concepts were migrated into the modular control-center architecture. Its history remains available through Git.
